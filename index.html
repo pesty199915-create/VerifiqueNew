@@ -12,7 +12,7 @@
 
 <script>
 // ==========================================
-// CAPTURA DE PARÂMETROS UTM (MANUAL)
+// CAPTURA DE PARÂMETROS UTM
 // ==========================================
 
 // Função para capturar UTMs da URL
@@ -28,7 +28,7 @@ function getUTMParams() {
   };
 }
 
-// Função que define o nome da campanha para o parâmetro start
+// Função que define o nome da campanha para o parâmetro (fallback pestykw)
 function getCampaignName() {
   const utms = getUTMParams();
   
@@ -45,35 +45,76 @@ function getCampaignName() {
   }
 }
 
-// Função que atualiza o link do botão
-function updateTelegramLink() {
+// Função para construir a URL de destino com TODOS os parâmetros UTM
+function buildDestinationUrl() {
   const campaignName = getCampaignName();
-  const button = document.querySelector('.button');
+  const baseUrl = "https://eufacodineirocomhot.com/l/d0089464";
   
+  // Cria URL com o parâmetro shk fixo
+  const url = new URL(baseUrl);
+  url.searchParams.set('shk', 'n455du82');
+  
+  // Adiciona o nome da campanha como parâmetro separado (para rastreamento)
+  url.searchParams.set('utm_campaign', campaignName);
+  
+  // Captura todos os parâmetros UTM da URL atual e adiciona na URL de destino
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  // Lista completa de parâmetros que serão mantidos
+  const paramsToKeep = [
+    'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'utm_id',
+    'fbclid', 'ttclid', 'gclid', 'msclkid', 'gbraid', 'wbraid', 'click_id'
+  ];
+  
+  paramsToKeep.forEach(param => {
+    const value = urlParams.get(param);
+    if (value && value !== '') {
+      // Se for utm_campaign, já foi setado, mas mantém o original
+      if (param !== 'utm_campaign') {
+        url.searchParams.set(param, value);
+      }
+    }
+  });
+  
+  // Debug completo
+  console.log('🔗 URL de destino final:', url.toString());
+  console.log('📊 UTMs capturadas da URL:', getUTMParams());
+  console.log('📌 Nome da campanha:', campaignName);
+  
+  return url.toString();
+}
+
+// Função que atualiza o link do botão
+function updateButtonLink() {
+  const button = document.querySelector('.button');
   if (button) {
-    const newUrl = `https://eufacodineirocomhot.com/l/d0089464?shk=n455du82&utm_campaign=${campaignName}`;
-    button.href = newUrl;
-    
-    console.log('🔗 Link atualizado:', newUrl);
-    console.log('📊 UTMs:', getUTMParams());
-    console.log('📌 start=', campaignName);
+    button.href = buildDestinationUrl();
+    console.log('✅ Botão atualizado com sucesso!');
   }
+}
+
+// Função para redirecionamento direto (se necessário)
+function doRedirect() {
+  window.location.href = buildDestinationUrl();
 }
 
 // Executa quando a página carregar
 document.addEventListener('DOMContentLoaded', function() {
-  updateTelegramLink();
+  updateButtonLink();
   
   const button = document.querySelector('.button');
   if (button) {
     button.addEventListener('click', function(e) {
-      const campaignName = getCampaignName();
-      this.href = `https://eufacodineirocomhot.com/l/d0089464?shk=n455du82&utm_campaign=${campaignName}`;
+      // Garante que o link está atualizado antes do clique
+      this.href = buildDestinationUrl();
+      console.log('🖱️ Clique registrado - Redirecionando...');
     });
   }
 });
 
-console.log('🚀 Página carregada com UTMs:', getUTMParams());
+// Debug inicial
+console.log('🚀 Página carregada');
+console.log('📊 UTMs na URL:', getUTMParams());
 </script>
 
 <style>
@@ -144,6 +185,7 @@ console.log('🚀 Página carregada com UTMs:', getUTMParams());
         font-size: 17px;
         transition: 0.3s;
         text-align: center;
+        cursor: pointer;
     }
 
     .button:hover {
