@@ -6,14 +6,13 @@
     data-token="917adc44-0aa8-4e64-8f55-c6934effbb18"
 >
 </script>
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
 <title>Acesso Exclusivo 📸🤳🏻</title>
 
 <script>
 // ==========================================
-// CAPTURA DE PARÂMETROS UTM
+// CAPTURA DE PARÂMETROS UTM (PRESERVAÇÃO ORIGINAL)
 // ==========================================
 (function() {
   var u = new URLSearchParams(window.location.search);
@@ -46,6 +45,79 @@
     attach();
   }
 })();
+
+// ==========================================
+// NOVA LÓGICA: CAPTURA UTMs E REDIRECIONA PARA O TELEGRAM COM start={campaign}
+// ==========================================
+
+// Função para capturar UTMs da URL (igual à presel anterior)
+function getUTMParams() {
+  const urlParams = new URLSearchParams(window.location.search);
+  return {
+    utm_source: urlParams.get('utm_source') || '',
+    utm_id: urlParams.get('utm_id') || '',
+    utm_campaign: urlParams.get('utm_campaign') || '',
+    utm_medium: urlParams.get('utm_medium') || '',
+    utm_content: urlParams.get('utm_content') || '',
+    utm_term: urlParams.get('utm_term') || ''
+  };
+}
+
+// Função que define o nome da campanha para o parâmetro start (igual à presel anterior)
+function getCampaignName() {
+  const utms = getUTMParams();
+  
+  // Prioridade: Nome da campanha > ID da campanha > "pesty01" (fallback)
+  if (utms.utm_campaign && utms.utm_campaign !== '') {
+    // Remove caracteres especiais e espaços para ficar compatível com o parâmetro do Telegram
+    let campaign = utms.utm_campaign;
+    // Limita a 30 caracteres (limite seguro pro Telegram)
+    campaign = campaign.substring(0, 30);
+    // Remove caracteres problemáticos
+    campaign = campaign.replace(/[^a-zA-Z0-9_\-]/g, '_');
+    return campaign;
+  } else if (utms.utm_id && utms.utm_id !== '') {
+    return utms.utm_id;
+  } else {
+    return 'vazads'; // Fallback padrão (preservando o original)
+  }
+}
+
+// Função que atualiza o link do botão com o start dinâmico
+function updateTelegramLink() {
+  const campaignName = getCampaignName();
+  const button = document.querySelector('.button');
+  
+  if (button) {
+    const newUrl = `https://t.me/DaarkVazados1_bot?start=${campaignName}`;
+    button.href = newUrl;
+    
+    // Debug: Mostra no console qual parâmetro está sendo enviado
+    console.log('🔗 Link do Telegram atualizado para:', newUrl);
+    console.log('📊 UTMs capturadas:', getUTMParams());
+    console.log('📌 Nome da campanha para start:', campaignName);
+  }
+}
+
+// Executa quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+  updateTelegramLink();
+  
+  // Opcional: Se quiser que ao clicar também reforce o parâmetro (garantia extra)
+  const button = document.querySelector('.button');
+  if (button) {
+    button.addEventListener('click', function(e) {
+      // Garante que o link está atualizado antes do clique
+      const campaignName = getCampaignName();
+      this.href = `https://t.me/DaarkVazados1_bot?start=${campaignName}`;
+      console.log('✅ Clique registrado - Redirecionando com start=', campaignName);
+    });
+  }
+});
+
+// Debug inicial
+console.log('🚀 Página carregada com UTMs:', getUTMParams());
+
 </script>
 
 <style>
