@@ -12,107 +12,124 @@
 
 <script>
 // ==========================================
-// CAPTURA DE PARÂMETROS - CAMPANHA (sck) E CRIATIVO (adname/CreativeID)
+// CAPTURA DE PARÂMETROS - CORRIGIDO
 // ==========================================
 
 // Captura o nome da CAMPANHA (vai para o campo "Campanha")
 function getCampaignName() {
   const urlParams = new URLSearchParams(window.location.search);
   
-  // PRIORIDADE: parâmetro 'sck' (como estava funcionando)
+  // PRIORIDADE 1: sck (código do Kwai/Clocker) - NÃO ignora KW-
   let sck = urlParams.get('sck');
   if (sck && sck !== '' && !sck.startsWith('__')) {
-    let campaign = sck.substring(0, 30);
+    // Mantém o valor completo, não remove "KW-"
+    let campaign = sck.substring(0, 40);
     campaign = campaign.replace(/[^a-zA-Z0-9_\-]/g, '_');
     console.log('🎯 Campanha capturada via sck:', campaign);
     return campaign;
   }
   
-  // Fallback: outros parâmetros de campanha
+  // PRIORIDADE 2: utm_source
+  let utmSource = urlParams.get('utm_source');
+  if (utmSource && utmSource !== '' && !utmSource.startsWith('__')) {
+    let campaign = utmSource.substring(0, 40);
+    campaign = campaign.replace(/[^a-zA-Z0-9_\-]/g, '_');
+    console.log('🎯 Campanha capturada via utm_source:', campaign);
+    return campaign;
+  }
+  
+  // PRIORIDADE 3: cname
   let cname = urlParams.get('cname');
   if (cname && cname !== '' && !cname.startsWith('__')) {
     console.log('🎯 Campanha capturada via cname:', cname);
     return cname;
   }
   
+  // PRIORIDADE 4: CampaignID
   let campaignId = urlParams.get('CampaignID');
   if (campaignId && campaignId !== '' && !campaignId.startsWith('__')) {
     console.log('🎯 Campanha capturada via CampaignID:', campaignId);
     return campaignId;
   }
   
+  // PRIORIDADE 5: utm_campaign
   let utmCampaign = urlParams.get('utm_campaign');
   if (utmCampaign && utmCampaign !== '') {
     console.log('🎯 Campanha capturada via utm_campaign:', utmCampaign);
     return utmCampaign;
   }
   
-  console.log('🎯 Campanha fallback: pestykw');
-  return 'pestykw';
+  console.log('🎯 Campanha fallback: organico');
+  return 'organico';
 }
 
 // Captura o nome do CRIATIVO (vai para "Código de Vendas")
 function getCreativeName() {
   const urlParams = new URLSearchParams(window.location.search);
   
-  // PRIORIDADE 1: adname (nome do anúncio/criativo)
+  // PRIORIDADE 1: click_id (pode ser o ID do criativo)
+  let clickId = urlParams.get('click_id');
+  if (clickId && clickId !== '' && !clickId.startsWith('__')) {
+    let creative = clickId.substring(0, 40);
+    creative = creative.replace(/[^a-zA-Z0-9_\-]/g, '_');
+    console.log('🎯 Criativo capturado via click_id:', creative);
+    return creative;
+  }
+  
+  // PRIORIDADE 2: adname
   let adname = urlParams.get('adname');
   if (adname && adname !== '' && !adname.startsWith('__')) {
-    let creative = adname.substring(0, 30);
+    let creative = adname.substring(0, 40);
     creative = creative.replace(/[^a-zA-Z0-9_\-]/g, '_');
     console.log('🎯 Criativo capturado via adname:', creative);
     return creative;
   }
   
-  // PRIORIDADE 2: CreativeID
+  // PRIORIDADE 3: CreativeID
   let creativeId = urlParams.get('CreativeID');
   if (creativeId && creativeId !== '' && !creativeId.startsWith('__')) {
-    let creative = creativeId.substring(0, 30);
+    let creative = creativeId.substring(0, 40);
     creative = creative.replace(/[^a-zA-Z0-9_\-]/g, '_');
     console.log('🎯 Criativo capturado via CreativeID:', creative);
     return creative;
   }
   
-  // PRIORIDADE 3: ad
+  // PRIORIDADE 4: ad
   let ad = urlParams.get('ad');
   if (ad && ad !== '' && !ad.startsWith('__')) {
-    let creative = ad.substring(0, 30);
+    let creative = ad.substring(0, 40);
     creative = creative.replace(/[^a-zA-Z0-9_\-]/g, '_');
     console.log('🎯 Criativo capturado via ad:', creative);
     return creative;
   }
   
-  // PRIORIDADE 4: utm_content
+  // PRIORIDADE 5: utm_content
   let utmContent = urlParams.get('utm_content');
   if (utmContent && utmContent !== '') {
-    let creative = utmContent.substring(0, 30);
+    let creative = utmContent.substring(0, 40);
     creative = creative.replace(/[^a-zA-Z0-9_\-]/g, '_');
     console.log('🎯 Criativo capturado via utm_content:', creative);
     return creative;
   }
   
-  console.log('🎯 Nenhum criativo detectado, usando fallback: organico');
-  return 'organico';
+  console.log('🎯 Nenhum criativo detectado, fallback: desconhecido');
+  return 'desconhecido';
 }
 
 // Constrói a URL para o Telegram/Bot
 function buildTelegramUrl() {
-  const campaignName = getCampaignName();    // Ex: KW-1781292286940-b8zor8yl1endc
-  const creativeName = getCreativeName();    // Ex: Video_Kwai_01 ou 3_mp4
+  const campaignName = getCampaignName();    // Prioriza sck
+  const creativeName = getCreativeName();    // Prioriza click_id ou adname
   
   const baseUrl = "https://t.me/DaarkVazados1_bot";
   const url = new URL(baseUrl);
   
-  // O parâmetro start recebe o CRIATIVO (vai virar "Código de Vendas")
+  // O parâmetro start recebe o CRIATIVO (vai para "Código de Vendas")
   url.searchParams.set('start', creativeName);
-  
-  // Também envia a campanha como parâmetro separado (se o bot suportar)
-  url.searchParams.set('campaign', campaignName);
   
   console.log('🔗 URL do Telegram:', url.toString());
   console.log('📌 CAMPANHA:', campaignName);
   console.log('📌 CRIATIVO (Código de Vendas):', creativeName);
-  console.log('📌 start =', creativeName);
   
   return url.toString();
 }
@@ -132,7 +149,6 @@ document.addEventListener('DOMContentLoaded', function() {
   if (button) {
     button.addEventListener('click', function(e) {
       this.href = buildTelegramUrl();
-      console.log('🖱️ Clique - Criativo:', getCreativeName());
     });
   }
 });
@@ -142,7 +158,7 @@ console.log('📋 URL atual:', window.location.href);
 
 // Mostra todos os parâmetros recebidos
 const allParams = new URLSearchParams(window.location.search);
-console.log('📊 Parâmetros recebidos:');
+console.log('📊 TODOS OS PARÂMETROS RECEBIDOS:');
 for (let [key, value] of allParams) {
   console.log(`   ${key} = ${value}`);
 }
