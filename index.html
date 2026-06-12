@@ -32,7 +32,7 @@ function getUTMParams() {
 function getCampaignName() {
   const utms = getUTMParams();
   
-  // Prioridade: Nome da campanha > ID da campanha > "pesty01" (fallback)
+  // Prioridade: Nome da campanha > ID da campanha > "pestykw" (fallback)
   if (utms.utm_campaign && utms.utm_campaign !== '') {
     let campaign = utms.utm_campaign;
     campaign = campaign.substring(0, 30);
@@ -41,7 +41,7 @@ function getCampaignName() {
   } else if (utms.utm_id && utms.utm_id !== '') {
     return utms.utm_id;
   } else {
-    return 'pesty01';
+    return 'pestykw';
   }
 }
 
