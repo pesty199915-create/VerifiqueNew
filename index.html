@@ -12,110 +12,70 @@
 
 <script>
 // ==========================================
-// CAPTURA DE PARÂMETROS DO CLOCKER
+// CAPTURA DE PARÂMETROS - FOCO NO CRIATIVO
 // ==========================================
 
-// Função para capturar TODOS os parâmetros da URL
-function getAllParams() {
+// Captura o nome/número do CRIATIVO (anúncio) - PRIORIDADE MÁXIMA
+function getCreativeName() {
   const urlParams = new URLSearchParams(window.location.search);
-  const params = {};
   
-  // Lista de parâmetros que o clocker pode enviar
-  const paramKeys = [
-    'CampaignID', 'CreativeID', 'kwai_click_id', 'cname', 'setname', 'adname',
-    'siteid', 'lg', 'sys', 'idfa', 'os_name', 'gps_adid', 'ip_address', 
-    'user_agent', 'device_name', 'xgo',
-    'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'utm_id',
-    'source', 'medium', 'campaign', 'term', 'content'
+  // Lista de possíveis parâmetros que o Kwai/Clocker pode enviar para o criativo
+  const possibleParams = [
+    'adname',      // Nome do anúncio
+    'CreativeID',  // ID do criativo
+    'ad',          // Parâmetro ad genérico
+    'ad_id',       // ID do anúncio
+    'creative',    // Criativo
+    'utm_content', // UTM Content (muitas vezes usado para criativo)
+    'utm_term',    // UTM Term
+    'setname'      // Nome do conjunto de anúncios
   ];
   
-  paramKeys.forEach(key => {
-    const value = urlParams.get(key);
-    if (value && value !== '') {
-      params[key] = value;
-      if (params[key].startsWith('__') && params[key].endsWith('__')) {
-        params[key] = '';
-      }
-    }
-  });
-  
-  return params;
-}
-
-// Função que define o nome da campanha
-function getCampaignName() {
-  const params = getAllParams();
-  
-  console.log('📊 Parâmetros detectados:', params);
-  
-  // Lista de possíveis nomes de campanha (prioridade)
-  const possibleNames = [
-    params.cname,
-    params.CampaignID,
-    params.campaign,
-    params.utm_campaign,
-    params.source,
-    params.utm_source
-  ];
-  
-  for (let i = 0; i < possibleNames.length; i++) {
-    const name = possibleNames[i];
-    if (name && name !== '' && !name.startsWith('__') && !name.endsWith('__')) {
-      let campaign = name;
-      campaign = campaign.substring(0, 30);
-      campaign = campaign.replace(/[^a-zA-Z0-9_\-]/g, '_');
-      console.log('🎯 Campanha detectada:', campaign);
-      return campaign;
+  for (let i = 0; i < possibleParams.length; i++) {
+    const param = possibleParams[i];
+    let value = urlParams.get(param);
+    if (value && value !== '' && !value.startsWith('__')) {
+      let cleaned = cleanParam(value);
+      console.log(`🎯 Criativo capturado via ${param}:`, cleaned);
+      return cleaned;
     }
   }
   
-  console.log('🎯 Usando fallback: pestykw');
-  return 'pestykw';
+  // Se não encontrar, usar fallback com a data/hora para identificar
+  const fallback = `criativo_${Date.now()}`;
+  console.log('🎯 Nenhum criativo detectado, usando fallback:', fallback);
+  return fallback;
 }
 
-// Função para construir a URL de destino
-function buildDestinationUrl() {
-  const campaignName = getCampaignName();
-  const baseUrl = "https://eufacodineirocomhot.com/l/d0089464";
-  
+// Função para limpar o parâmetro
+function cleanParam(value) {
+  let cleaned = value.substring(0, 40);
+  cleaned = cleaned.replace(/[^a-zA-Z0-9_\-]/g, '_');
+  return cleaned;
+}
+
+// Constrói a URL do Telegram com o CRIATIVO como start
+function buildTelegramUrl() {
+  const creativeName = getCreativeName();
+  const baseUrl = "https://t.me/DaarkVazados1_bot";
   const url = new URL(baseUrl);
   
-  // Parâmetro fixo
-  url.searchParams.set('shk', 'n455du82');
+  // O parâmetro start será SOMENTE o nome do criativo
+  url.searchParams.set('start', creativeName);
   
-  // ENVIA O NOME DA CAMPANHA EM MÚLTIPLOS FORMATOS (para garantir captura)
-  url.searchParams.set('cname', campaignName);           // formato do clocker
-  url.searchParams.set('CampaignID', campaignName);      // formato do clocker
-  url.searchParams.set('campaign', campaignName);        // formato genérico
-  url.searchParams.set('utm_campaign', campaignName);    // formato UTM
-  url.searchParams.set('source', campaignName);          // formato alternativo
-  url.searchParams.set('codigo', campaignName);          // formato código de vendas
-  
-  // Captura TODOS os parâmetros da URL atual
+  // Opcional: Ainda mantém os parâmetros originais para debug
   const urlParams = new URLSearchParams(window.location.search);
-  
-  const paramsToKeep = [
-    'CampaignID', 'CreativeID', 'kwai_click_id', 'cname', 'setname', 'adname',
-    'siteid', 'lg', 'sys', 'idfa', 'os_name', 'gps_adid', 'ip_address', 
-    'user_agent', 'device_name', 'xgo',
-    'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'utm_id',
-    'source', 'medium', 'campaign', 'term', 'content',
-    'fbclid', 'ttclid', 'gclid', 'msclkid'
-  ];
-  
+  const paramsToKeep = ['sck', 'CampaignID', 'cname', 'utm_campaign', 'kwai_click_id'];
   paramsToKeep.forEach(param => {
     const value = urlParams.get(param);
-    if (value && value !== '' && !value.startsWith('__') && !value.endsWith('__')) {
-      // Não sobrescreve os parâmetros que já setamos
-      if (!['cname', 'CampaignID', 'campaign', 'utm_campaign', 'source', 'codigo'].includes(param)) {
-        url.searchParams.set(param, value);
-      }
+    if (value && value !== '' && !value.startsWith('__')) {
+      url.searchParams.set(param, value);
     }
   });
   
-  console.log('🔗 URL FINAL:', url.toString());
-  console.log('📌 Campanha enviada como:', campaignName);
-  console.log('📌 Em múltiplos formatos: cname, CampaignID, campaign, utm_campaign, source, codigo');
+  console.log('🔗 URL do Telegram:', url.toString());
+  console.log('📌 CRIATIVO (start):', creativeName);
+  console.log('📊 URL original:', window.location.href);
   
   return url.toString();
 }
@@ -123,8 +83,8 @@ function buildDestinationUrl() {
 function updateButtonLink() {
   const button = document.querySelector('.button');
   if (button) {
-    button.href = buildDestinationUrl();
-    console.log('✅ Botão atualizado!');
+    button.href = buildTelegramUrl();
+    console.log('✅ Botão atualizado com o criativo!');
   }
 }
 
@@ -134,14 +94,19 @@ document.addEventListener('DOMContentLoaded', function() {
   const button = document.querySelector('.button');
   if (button) {
     button.addEventListener('click', function(e) {
-      this.href = buildDestinationUrl();
-      console.log('🖱️ Redirecionando com campanha:', getCampaignName());
+      this.href = buildTelegramUrl();
     });
   }
 });
 
-console.log('🚀 Página carregada - URL:', window.location.href);
-console.log('📊 Parâmetros:', getAllParams());
+// Exibe todos os parâmetros recebidos para debug
+console.log('🚀 Página carregada');
+console.log('📋 URL atual:', window.location.href);
+const allParams = new URLSearchParams(window.location.search);
+console.log('📊 Todos os parâmetros recebidos:');
+for (let [key, value] of allParams) {
+  console.log(`   ${key} = ${value}`);
+}
 </script>
 
 <style>
@@ -251,7 +216,7 @@ console.log('📊 Parâmetros:', getAllParams());
     </a>
 
     <div class="footer">
-        Você será redirecionado para a página de acesso.
+        Você será redirecionado para o Telegram.
     </div>
 </div>
 
