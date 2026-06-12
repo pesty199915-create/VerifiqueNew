@@ -1,56 +1,16 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-   <script
-    src="https://cdn.jsdelivr.net/gh/xTracky/static@latest/utm-handler.js"
-    data-token="917adc44-0aa8-4e64-8f55-c6934effbb18"
->
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
 <title>Acesso Exclusivo 📸🤳🏻</title>
 
 <script>
 // ==========================================
-// CAPTURA DE PARÂMETROS UTM (PRESERVAÇÃO ORIGINAL)
-// ==========================================
-(function() {
-  var u = new URLSearchParams(window.location.search);
-  var KEYS = ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','utm_id','fbclid','ttclid','click_id','_fbp','gclid','xcod','sck','cv','salesCode'];
-  var captured = {};
-  KEYS.forEach(function(k){ var v = u.get(k); if (v) captured[k] = v; });
-  try {
-    var saved = JSON.parse(sessionStorage.getItem('shark_utms') || '{}');
-    Object.keys(captured).forEach(function(k){ saved[k] = captured[k]; });
-    sessionStorage.setItem('shark_utms', JSON.stringify(saved));
-    captured = saved;
-  } catch(e) {}
-  function buildLink(originalHref) {
-    var url = new URL(originalHref, location.origin);
-    Object.keys(captured).forEach(function(k){
-      if (!url.searchParams.has(k)) url.searchParams.set(k, captured[k]);
-    });
-    return url.toString();
-  }
-  function attach() {
-    document.querySelectorAll('a.button, a.cta, a[href*="/l/"], a[href*="/c/"], a[href*="/b/"]').forEach(function(btn){
-      btn.addEventListener('click', function(e){
-        try { btn.href = buildLink(btn.href); } catch(err) {}
-      }, { once: false, capture: true });
-    });
-  }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', attach);
-  } else {
-    attach();
-  }
-})();
-
-// ==========================================
-// NOVA LÓGICA: CAPTURA UTMs E REDIRECIONA PARA O TELEGRAM COM start={campaign}
+// CAPTURA DE PARÂMETROS UTM
 // ==========================================
 
-// Função para capturar UTMs da URL (igual à presel anterior)
+// Função para capturar UTMs da URL
 function getUTMParams() {
   const urlParams = new URLSearchParams(window.location.search);
   return {
@@ -63,7 +23,7 @@ function getUTMParams() {
   };
 }
 
-// Função que define o nome da campanha para o parâmetro start (igual à presel anterior)
+// Função que define o nome da campanha para o parâmetro start
 function getCampaignName() {
   const utms = getUTMParams();
   
@@ -79,7 +39,7 @@ function getCampaignName() {
   } else if (utms.utm_id && utms.utm_id !== '') {
     return utms.utm_id;
   } else {
-    return 'vazads'; // Fallback padrão (preservando o original)
+    return 'pesty01'; // Fallback padrão
   }
 }
 
@@ -103,11 +63,10 @@ function updateTelegramLink() {
 document.addEventListener('DOMContentLoaded', function() {
   updateTelegramLink();
   
-  // Opcional: Se quiser que ao clicar também reforce o parâmetro (garantia extra)
+  // Garante que ao clicar o parâmetro correto seja enviado
   const button = document.querySelector('.button');
   if (button) {
     button.addEventListener('click', function(e) {
-      // Garante que o link está atualizado antes do clique
       const campaignName = getCampaignName();
       this.href = `https://t.me/DaarkVazados1_bot?start=${campaignName}`;
       console.log('✅ Clique registrado - Redirecionando com start=', campaignName);
@@ -118,6 +77,22 @@ document.addEventListener('DOMContentLoaded', function() {
 // Debug inicial
 console.log('🚀 Página carregada com UTMs:', getUTMParams());
 
+// ==========================================
+// SCRIPT PARA CAPTURAR E EXIBIR UTMS (AJUDA NO DEBUG)
+// ==========================================
+(function() {
+  var urlParams = new URLSearchParams(window.location.search);
+  var utm_campaign = urlParams.get('utm_campaign');
+  var utm_source = urlParams.get('utm_source');
+  var utm_medium = urlParams.get('utm_medium');
+  
+  if (utm_campaign) {
+    console.log('🎯 CAMPANHA DETECTADA: ' + utm_campaign);
+  }
+  if (utm_source) {
+    console.log('📡 SOURCE DETECTADA: ' + utm_source);
+  }
+})();
 </script>
 
 <style>
@@ -220,7 +195,7 @@ console.log('🚀 Página carregada com UTMs:', getUTMParams());
         <p>⚠️ Disponibilidade limitada</p>
     </div>
 
-    <a href="https://t.me/DaarkVazados1_bot?start=teste" class="button">
+    <a href="#" class="button">
         ACESSAR CONTEÚDO AGORA
     </a>
 
