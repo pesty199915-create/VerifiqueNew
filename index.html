@@ -12,34 +12,42 @@
 
 <script>
 // ==========================================
-// CAPTURA DE PARÂMETROS - CAMPANHA e CRIATIVO
+// CAPTURA DE PARÂMETROS - CAMPANHA (sck) E CRIATIVO (adname/CreativeID)
 // ==========================================
 
 // Captura o nome da CAMPANHA (vai para o campo "Campanha")
 function getCampaignName() {
   const urlParams = new URLSearchParams(window.location.search);
   
-  // Prioridade: cname > CampaignID > utm_campaign
+  // PRIORIDADE: parâmetro 'sck' (como estava funcionando)
+  let sck = urlParams.get('sck');
+  if (sck && sck !== '' && !sck.startsWith('__')) {
+    let campaign = sck.substring(0, 30);
+    campaign = campaign.replace(/[^a-zA-Z0-9_\-]/g, '_');
+    console.log('🎯 Campanha capturada via sck:', campaign);
+    return campaign;
+  }
+  
+  // Fallback: outros parâmetros de campanha
   let cname = urlParams.get('cname');
   if (cname && cname !== '' && !cname.startsWith('__')) {
-    return cleanParam(cname);
+    console.log('🎯 Campanha capturada via cname:', cname);
+    return cname;
   }
   
   let campaignId = urlParams.get('CampaignID');
   if (campaignId && campaignId !== '' && !campaignId.startsWith('__')) {
-    return cleanParam(campaignId);
+    console.log('🎯 Campanha capturada via CampaignID:', campaignId);
+    return campaignId;
   }
   
   let utmCampaign = urlParams.get('utm_campaign');
   if (utmCampaign && utmCampaign !== '') {
-    return cleanParam(utmCampaign);
+    console.log('🎯 Campanha capturada via utm_campaign:', utmCampaign);
+    return utmCampaign;
   }
   
-  let sck = urlParams.get('sck');
-  if (sck && sck !== '' && !sck.startsWith('__')) {
-    return cleanParam(sck);
-  }
-  
+  console.log('🎯 Campanha fallback: pestykw');
   return 'pestykw';
 }
 
@@ -47,40 +55,50 @@ function getCampaignName() {
 function getCreativeName() {
   const urlParams = new URLSearchParams(window.location.search);
   
-  // Prioridade: adname > CreativeID > ad > utm_content
+  // PRIORIDADE 1: adname (nome do anúncio/criativo)
   let adname = urlParams.get('adname');
   if (adname && adname !== '' && !adname.startsWith('__')) {
-    return cleanParam(adname);
+    let creative = adname.substring(0, 30);
+    creative = creative.replace(/[^a-zA-Z0-9_\-]/g, '_');
+    console.log('🎯 Criativo capturado via adname:', creative);
+    return creative;
   }
   
+  // PRIORIDADE 2: CreativeID
   let creativeId = urlParams.get('CreativeID');
   if (creativeId && creativeId !== '' && !creativeId.startsWith('__')) {
-    return cleanParam(creativeId);
+    let creative = creativeId.substring(0, 30);
+    creative = creative.replace(/[^a-zA-Z0-9_\-]/g, '_');
+    console.log('🎯 Criativo capturado via CreativeID:', creative);
+    return creative;
   }
   
+  // PRIORIDADE 3: ad
   let ad = urlParams.get('ad');
   if (ad && ad !== '' && !ad.startsWith('__')) {
-    return cleanParam(ad);
+    let creative = ad.substring(0, 30);
+    creative = creative.replace(/[^a-zA-Z0-9_\-]/g, '_');
+    console.log('🎯 Criativo capturado via ad:', creative);
+    return creative;
   }
   
+  // PRIORIDADE 4: utm_content
   let utmContent = urlParams.get('utm_content');
   if (utmContent && utmContent !== '') {
-    return cleanParam(utmContent);
+    let creative = utmContent.substring(0, 30);
+    creative = creative.replace(/[^a-zA-Z0-9_\-]/g, '_');
+    console.log('🎯 Criativo capturado via utm_content:', creative);
+    return creative;
   }
   
-  return 'desconhecido';
-}
-
-function cleanParam(value) {
-  let cleaned = value.substring(0, 40);
-  cleaned = cleaned.replace(/[^a-zA-Z0-9_\-]/g, '_');
-  return cleaned;
+  console.log('🎯 Nenhum criativo detectado, usando fallback: organico');
+  return 'organico';
 }
 
 // Constrói a URL para o Telegram/Bot
 function buildTelegramUrl() {
-  const campaignName = getCampaignName();    // Ex: CBO_1-1-5
-  const creativeName = getCreativeName();    // Ex: Video_Kwai_01
+  const campaignName = getCampaignName();    // Ex: KW-1781292286940-b8zor8yl1endc
+  const creativeName = getCreativeName();    // Ex: Video_Kwai_01 ou 3_mp4
   
   const baseUrl = "https://t.me/DaarkVazados1_bot";
   const url = new URL(baseUrl);
@@ -88,18 +106,11 @@ function buildTelegramUrl() {
   // O parâmetro start recebe o CRIATIVO (vai virar "Código de Vendas")
   url.searchParams.set('start', creativeName);
   
-  // Mantém os parâmetros originais para debug
-  const urlParams = new URLSearchParams(window.location.search);
-  const paramsToKeep = ['sck', 'CampaignID', 'cname', 'utm_campaign', 'adname', 'CreativeID'];
-  paramsToKeep.forEach(param => {
-    const value = urlParams.get(param);
-    if (value && value !== '' && !value.startsWith('__')) {
-      url.searchParams.set(param, value);
-    }
-  });
+  // Também envia a campanha como parâmetro separado (se o bot suportar)
+  url.searchParams.set('campaign', campaignName);
   
   console.log('🔗 URL do Telegram:', url.toString());
-  console.log('📌 CAMPANHA (Campanha):', campaignName);
+  console.log('📌 CAMPANHA:', campaignName);
   console.log('📌 CRIATIVO (Código de Vendas):', creativeName);
   console.log('📌 start =', creativeName);
   
@@ -121,6 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (button) {
     button.addEventListener('click', function(e) {
       this.href = buildTelegramUrl();
+      console.log('🖱️ Clique - Criativo:', getCreativeName());
     });
   }
 });
