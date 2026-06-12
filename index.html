@@ -12,26 +12,29 @@
 
 <script>
 // ==========================================
-// CAPTURA DE PARÂMETROS - VERSÃO COMPLETA
+// CAPTURA DE PARÂMETROS - VERSÃO FINAL
 // ==========================================
 
 function getCampaignName() {
   const urlParams = new URLSearchParams(window.location.search);
   
-  // Lista completa de possíveis parâmetros de campanha
-  const params = [
-    'sck', 'campaign', 'CampaignID', 'cname', 'utm_campaign', 
-    'source', 'utm_source', 'campaign_id', 'campaignId'
-  ];
-  
-  for (let p of params) {
-    let value = urlParams.get(p);
-    if (value && value !== '' && !value.startsWith('__')) {
-      let cleaned = value.substring(0, 40).replace(/[^a-zA-Z0-9_\-]/g, '_');
-      console.log(`✅ Campanha capturada via ${p}:`, cleaned);
-      return cleaned;
-    }
+  // Prioridade para sck (como estava funcionando)
+  let sck = urlParams.get('sck');
+  if (sck && sck !== '' && !sck.startsWith('__')) {
+    let cleaned = sck.substring(0, 40).replace(/[^a-zA-Z0-9_\-]/g, '_');
+    console.log('✅ Campanha via sck:', cleaned);
+    return cleaned;
   }
+  
+  // Fallback: outros parâmetros
+  let cname = urlParams.get('cname');
+  if (cname && cname !== '') return cname;
+  
+  let campaignId = urlParams.get('CampaignID');
+  if (campaignId && campaignId !== '') return campaignId;
+  
+  let utmCampaign = urlParams.get('utm_campaign');
+  if (utmCampaign && utmCampaign !== '') return utmCampaign;
   
   console.log('⚠️ Campanha fallback: organico');
   return 'organico';
@@ -40,17 +43,46 @@ function getCampaignName() {
 function getCreativeName() {
   const urlParams = new URLSearchParams(window.location.search);
   
-  // Lista completa de possíveis parâmetros de criativo
-  const params = [
-    'adname', 'CreativeID', 'click_id', 'ad', 'creative', 
-    'ad_id', 'utm_content', 'utm_term', 'cid', 'creative_id'
-  ];
+  // PRIORIDADE 1: adname (nome do criativo)
+  let adname = urlParams.get('adname');
+  if (adname && adname !== '' && !adname.startsWith('__')) {
+    let cleaned = adname.substring(0, 40).replace(/[^a-zA-Z0-9_\-]/g, '_');
+    console.log('✅ Criativo via adname:', cleaned);
+    return cleaned;
+  }
   
-  for (let p of params) {
-    let value = urlParams.get(p);
-    if (value && value !== '' && !value.startsWith('__')) {
-      let cleaned = value.substring(0, 40).replace(/[^a-zA-Z0-9_\-]/g, '_');
-      console.log(`✅ Criativo capturado via ${p}:`, cleaned);
+  // PRIORIDADE 2: CreativeID
+  let creativeId = urlParams.get('CreativeID');
+  if (creativeId && creativeId !== '' && !creativeId.startsWith('__')) {
+    let cleaned = creativeId.substring(0, 40).replace(/[^a-zA-Z0-9_\-]/g, '_');
+    console.log('✅ Criativo via CreativeID:', cleaned);
+    return cleaned;
+  }
+  
+  // PRIORIDADE 3: click_id
+  let clickId = urlParams.get('click_id');
+  if (clickId && clickId !== '' && !clickId.startsWith('__')) {
+    let cleaned = clickId.substring(0, 40).replace(/[^a-zA-Z0-9_\-]/g, '_');
+    console.log('✅ Criativo via click_id:', cleaned);
+    return cleaned;
+  }
+  
+  // PRIORIDADE 4: utm_content
+  let utmContent = urlParams.get('utm_content');
+  if (utmContent && utmContent !== '') {
+    let cleaned = utmContent.substring(0, 40).replace(/[^a-zA-Z0-9_\-]/g, '_');
+    console.log('✅ Criativo via utm_content:', cleaned);
+    return cleaned;
+  }
+  
+  // FALLBACK: usar o final do sck (se existir)
+  let sck = urlParams.get('sck');
+  if (sck && sck !== '') {
+    let partes = sck.split('-');
+    let ultimaParte = partes[partes.length - 1];
+    if (ultimaParte && ultimaParte.length > 5) {
+      let cleaned = ultimaParte.substring(0, 30).replace(/[^a-zA-Z0-9_\-]/g, '_');
+      console.log('⚠️ Criativo fallback (via sck):', cleaned);
       return cleaned;
     }
   }
@@ -66,7 +98,6 @@ function buildTelegramUrl() {
   const baseUrl = "https://t.me/DaarkVazados1_bot";
   const url = new URL(baseUrl);
   
-  // start = criativo (Código de Vendas)
   url.searchParams.set('start', creativeName);
   
   console.log('🔗 URL FINAL:', url.toString());
@@ -94,10 +125,9 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-// DEBUG COMPLETO
 console.log('🚀 Página carregada');
 console.log('📋 URL:', window.location.href);
-console.log('📊 TODOS OS PARÂMETROS:');
+console.log('📊 PARÂMETROS NA URL:');
 new URLSearchParams(window.location.search).forEach((value, key) => {
   console.log(`   ${key} = ${value}`);
 });
