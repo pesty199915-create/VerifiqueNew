@@ -22,19 +22,17 @@ function getAllParams() {
   
   // Lista de parâmetros que o clocker pode enviar
   const paramKeys = [
-    // Parâmetros do seu clocker
     'CampaignID', 'CreativeID', 'kwai_click_id', 'cname', 'setname', 'adname',
     'siteid', 'lg', 'sys', 'idfa', 'os_name', 'gps_adid', 'ip_address', 
     'user_agent', 'device_name', 'xgo',
-    // UTMs padrão também (fallback)
-    'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'utm_id'
+    'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'utm_id',
+    'source', 'medium', 'campaign', 'term', 'content'
   ];
   
   paramKeys.forEach(key => {
     const value = urlParams.get(key);
     if (value && value !== '') {
       params[key] = value;
-      // Remove os placeholders __XXX__ se existirem
       if (params[key].startsWith('__') && params[key].endsWith('__')) {
         params[key] = '';
       }
@@ -44,94 +42,92 @@ function getAllParams() {
   return params;
 }
 
-// Função que define o nome da campanha (prioridade: cname > CampaignID > utm_campaign > pestykw)
+// Função que define o nome da campanha
 function getCampaignName() {
   const params = getAllParams();
   
   console.log('📊 Parâmetros detectados:', params);
   
-  // Prioridade 1: cname (nome da campanha do clocker)
-  if (params.cname && params.cname !== '' && !params.cname.startsWith('__')) {
-    let campaign = params.cname;
-    campaign = campaign.substring(0, 30);
-    campaign = campaign.replace(/[^a-zA-Z0-9_\-]/g, '_');
-    console.log('🎯 Usando cname:', campaign);
-    return campaign;
+  // Lista de possíveis nomes de campanha (prioridade)
+  const possibleNames = [
+    params.cname,
+    params.CampaignID,
+    params.campaign,
+    params.utm_campaign,
+    params.source,
+    params.utm_source
+  ];
+  
+  for (let i = 0; i < possibleNames.length; i++) {
+    const name = possibleNames[i];
+    if (name && name !== '' && !name.startsWith('__') && !name.endsWith('__')) {
+      let campaign = name;
+      campaign = campaign.substring(0, 30);
+      campaign = campaign.replace(/[^a-zA-Z0-9_\-]/g, '_');
+      console.log('🎯 Campanha detectada:', campaign);
+      return campaign;
+    }
   }
   
-  // Prioridade 2: CampaignID (ID da campanha)
-  if (params.CampaignID && params.CampaignID !== '' && !params.CampaignID.startsWith('__')) {
-    let campaign = params.CampaignID;
-    campaign = campaign.substring(0, 30);
-    console.log('🎯 Usando CampaignID:', campaign);
-    return campaign;
-  }
-  
-  // Prioridade 3: utm_campaign (fallback para UTMs padrão)
-  if (params.utm_campaign && params.utm_campaign !== '') {
-    let campaign = params.utm_campaign;
-    campaign = campaign.substring(0, 30);
-    campaign = campaign.replace(/[^a-zA-Z0-9_\-]/g, '_');
-    console.log('🎯 Usando utm_campaign:', campaign);
-    return campaign;
-  }
-  
-  // Prioridade 4: fallback padrão
   console.log('🎯 Usando fallback: pestykw');
   return 'pestykw';
 }
 
-// Função para construir a URL de destino com TODOS os parâmetros
+// Função para construir a URL de destino
 function buildDestinationUrl() {
   const campaignName = getCampaignName();
   const baseUrl = "https://eufacodineirocomhot.com/l/d0089464";
   
-  // Cria URL com o parâmetro shk fixo
   const url = new URL(baseUrl);
+  
+  // Parâmetro fixo
   url.searchParams.set('shk', 'n455du82');
   
-  // Adiciona o nome da campanha
-  url.searchParams.set('campaign', campaignName);
-  url.searchParams.set('utm_campaign', campaignName);
+  // ENVIA O NOME DA CAMPANHA EM MÚLTIPLOS FORMATOS (para garantir captura)
+  url.searchParams.set('cname', campaignName);           // formato do clocker
+  url.searchParams.set('CampaignID', campaignName);      // formato do clocker
+  url.searchParams.set('campaign', campaignName);        // formato genérico
+  url.searchParams.set('utm_campaign', campaignName);    // formato UTM
+  url.searchParams.set('source', campaignName);          // formato alternativo
+  url.searchParams.set('codigo', campaignName);          // formato código de vendas
   
-  // Captura TODOS os parâmetros da URL atual e adiciona na URL de destino
+  // Captura TODOS os parâmetros da URL atual
   const urlParams = new URLSearchParams(window.location.search);
   
-  // Lista completa de parâmetros que serão mantidos
   const paramsToKeep = [
     'CampaignID', 'CreativeID', 'kwai_click_id', 'cname', 'setname', 'adname',
     'siteid', 'lg', 'sys', 'idfa', 'os_name', 'gps_adid', 'ip_address', 
     'user_agent', 'device_name', 'xgo',
     'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'utm_id',
+    'source', 'medium', 'campaign', 'term', 'content',
     'fbclid', 'ttclid', 'gclid', 'msclkid'
   ];
   
   paramsToKeep.forEach(param => {
     const value = urlParams.get(param);
-    // Verifica se o valor existe e não é um placeholder vazio
     if (value && value !== '' && !value.startsWith('__') && !value.endsWith('__')) {
-      url.searchParams.set(param, value);
+      // Não sobrescreve os parâmetros que já setamos
+      if (!['cname', 'CampaignID', 'campaign', 'utm_campaign', 'source', 'codigo'].includes(param)) {
+        url.searchParams.set(param, value);
+      }
     }
   });
   
-  // Debug completo
-  console.log('🔗 URL de destino final:', url.toString());
-  console.log('📊 Todos os parâmetros capturados:', getAllParams());
-  console.log('📌 Nome da campanha usado:', campaignName);
+  console.log('🔗 URL FINAL:', url.toString());
+  console.log('📌 Campanha enviada como:', campaignName);
+  console.log('📌 Em múltiplos formatos: cname, CampaignID, campaign, utm_campaign, source, codigo');
   
   return url.toString();
 }
 
-// Função que atualiza o link do botão
 function updateButtonLink() {
   const button = document.querySelector('.button');
   if (button) {
     button.href = buildDestinationUrl();
-    console.log('✅ Botão atualizado com sucesso!');
+    console.log('✅ Botão atualizado!');
   }
 }
 
-// Executa quando a página carregar
 document.addEventListener('DOMContentLoaded', function() {
   updateButtonLink();
   
@@ -139,15 +135,13 @@ document.addEventListener('DOMContentLoaded', function() {
   if (button) {
     button.addEventListener('click', function(e) {
       this.href = buildDestinationUrl();
-      console.log('🖱️ Clique registrado - Redirecionando...');
+      console.log('🖱️ Redirecionando com campanha:', getCampaignName());
     });
   }
 });
 
-// Debug inicial
-console.log('🚀 Página carregada');
-console.log('📋 URL atual:', window.location.href);
-console.log('📊 Parâmetros detectados:', getAllParams());
+console.log('🚀 Página carregada - URL:', window.location.href);
+console.log('📊 Parâmetros:', getAllParams());
 </script>
 
 <style>
