@@ -12,13 +12,13 @@
 
 <script>
 // ==========================================
-// CAPTURA DE PARÂMETROS - FOCADO NO CRIATIVO (Código de Vendas)
+// CAPTURA DE PARÂMETROS - CÓDIGO VENDAS + CAMPANHA
 // ==========================================
 
+// ========== CÓDIGO DE VENDAS (criativo) - já estava funcionando ==========
 function getCreativeName() {
   const urlParams = new URLSearchParams(window.location.search);
   
-  // PRIORIDADE 1: adname (nome do criativo)
   let adname = urlParams.get('adname');
   if (adname && adname !== '' && !adname.startsWith('__')) {
     let cleaned = adname.substring(0, 40).replace(/[^a-zA-Z0-9_\-]/g, '_');
@@ -26,7 +26,6 @@ function getCreativeName() {
     return cleaned;
   }
   
-  // PRIORIDADE 2: CreativeID
   let creativeId = urlParams.get('CreativeID');
   if (creativeId && creativeId !== '' && !creativeId.startsWith('__')) {
     let cleaned = creativeId.substring(0, 40).replace(/[^a-zA-Z0-9_\-]/g, '_');
@@ -34,7 +33,6 @@ function getCreativeName() {
     return cleaned;
   }
   
-  // PRIORIDADE 3: click_id
   let clickId = urlParams.get('click_id');
   if (clickId && clickId !== '' && !clickId.startsWith('__')) {
     let cleaned = clickId.substring(0, 40).replace(/[^a-zA-Z0-9_\-]/g, '_');
@@ -42,7 +40,6 @@ function getCreativeName() {
     return cleaned;
   }
   
-  // PRIORIDADE 4: utm_content
   let utmContent = urlParams.get('utm_content');
   if (utmContent && utmContent !== '') {
     let cleaned = utmContent.substring(0, 40).replace(/[^a-zA-Z0-9_\-]/g, '_');
@@ -50,7 +47,6 @@ function getCreativeName() {
     return cleaned;
   }
   
-  // FALLBACK: usar o final do sck (se existir)
   let sck = urlParams.get('sck');
   if (sck && sck !== '') {
     let partes = sck.split('-');
@@ -62,24 +58,61 @@ function getCreativeName() {
     }
   }
   
-  // Último fallback: usar horário
   const now = new Date();
   const timestamp = `${now.getHours()}h${now.getMinutes()}m${now.getSeconds()}s`;
   console.log('⚠️ Criativo fallback (timestamp):', timestamp);
   return timestamp;
 }
 
+// ========== NOME DA CAMPANHA (adicionado sem quebrar o de cima) ==========
+function getCampaignName() {
+  const urlParams = new URLSearchParams(window.location.search);
+  
+  let cname = urlParams.get('cname');
+  if (cname && cname !== '' && !cname.startsWith('__')) {
+    console.log('✅ Campanha via cname:', cname);
+    return cname;
+  }
+  
+  let campaignId = urlParams.get('CampaignID');
+  if (campaignId && campaignId !== '' && !campaignId.startsWith('__')) {
+    console.log('✅ Campanha via CampaignID:', campaignId);
+    return campaignId;
+  }
+  
+  let utmCampaign = urlParams.get('utm_campaign');
+  if (utmCampaign && utmCampaign !== '') {
+    console.log('✅ Campanha via utm_campaign:', utmCampaign);
+    return utmCampaign;
+  }
+  
+  let sck = urlParams.get('sck');
+  if (sck && sck !== '' && !sck.startsWith('__')) {
+    console.log('✅ Campanha via sck:', sck);
+    return sck;
+  }
+  
+  console.log('⚠️ Campanha fallback: organico');
+  return 'organico';
+}
+
+// ========== CONSTRÓI A URL ==========
 function buildTelegramUrl() {
-  const creativeName = getCreativeName();
+  const creativeName = getCreativeName();   // Código de Vendas
+  const campaignName = getCampaignName();   // Campanha (não usado no start, mas para debug)
   
   const baseUrl = "https://t.me/DaarkVazados1_bot";
   const url = new URL(baseUrl);
   
-  // start = criativo (Código de Vendas)
+  // start = criativo (Código de Vendas) - ISSO JÁ FUNCIONA
   url.searchParams.set('start', creativeName);
+  
+  // Opcional: envia campanha como parâmetro separado (se o bot suportar)
+  url.searchParams.set('campaign', campaignName);
   
   console.log('🔗 URL FINAL:', url.toString());
   console.log('📌 CÓDIGO DE VENDAS (start):', creativeName);
+  console.log('📌 CAMPANHA:', campaignName);
   
   return url.toString();
 }
