@@ -12,159 +12,74 @@
 
 <script>
 // ==========================================
-// CAPTURA DE PARÂMETROS - CAMPANHA E CRIATIVO
+// CAPTURA DE PARÂMETROS - FOCADO NO CRIATIVO (Código de Vendas)
 // ==========================================
 
-// Função para capturar TODOS os parâmetros da URL
-function getAllParams() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const params = {};
-  
-  const paramKeys = [
-    'CampaignID', 'CreativeID', 'kwai_click_id', 'cname', 'setname', 'adname',
-    'siteid', 'lg', 'sys', 'idfa', 'os_name', 'gps_adid', 'ip_address', 
-    'user_agent', 'device_name', 'xgo',
-    'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'utm_id',
-    'source', 'medium', 'campaign', 'term', 'content'
-  ];
-  
-  paramKeys.forEach(key => {
-    const value = urlParams.get(key);
-    if (value && value !== '') {
-      params[key] = value;
-      if (params[key].startsWith('__') && params[key].endsWith('__')) {
-        params[key] = '';
-      }
-    }
-  });
-  
-  return params;
-}
-
-// ==========================================
-// NOME DA CAMPANHA (igual ao código que estava funcionando)
-// ==========================================
-function getCampaignName() {
-  const params = getAllParams();
-  
-  console.log('📊 Parâmetros detectados:', params);
-  
-  const possibleNames = [
-    params.cname,
-    params.CampaignID,
-    params.campaign,
-    params.utm_campaign,
-    params.source,
-    params.utm_source
-  ];
-  
-  for (let i = 0; i < possibleNames.length; i++) {
-    const name = possibleNames[i];
-    if (name && name !== '' && !name.startsWith('__') && !name.endsWith('__')) {
-      let campaign = name;
-      campaign = campaign.substring(0, 30);
-      campaign = campaign.replace(/[^a-zA-Z0-9_\-]/g, '_');
-      console.log('🎯 Campanha detectada:', campaign);
-      return campaign;
-    }
-  }
-  
-  console.log('🎯 Campanha fallback: pestykw');
-  return 'pestykw';
-}
-
-// ==========================================
-// NOME DO CRIATIVO (igual ao código que estava marcando)
-// ==========================================
 function getCreativeName() {
-  const params = getAllParams();
+  const urlParams = new URLSearchParams(window.location.search);
   
-  const possibleNames = [
-    params.adname,
-    params.CreativeID,
-    params.utm_content,
-    params.term,
-    params.content,
-    params.kwai_click_id,
-    params.ad,
-    params.creative,
-    params.ad_id
-  ];
+  // PRIORIDADE 1: adname (nome do criativo)
+  let adname = urlParams.get('adname');
+  if (adname && adname !== '' && !adname.startsWith('__')) {
+    let cleaned = adname.substring(0, 40).replace(/[^a-zA-Z0-9_\-]/g, '_');
+    console.log('✅ Criativo via adname:', cleaned);
+    return cleaned;
+  }
   
-  for (let i = 0; i < possibleNames.length; i++) {
-    const name = possibleNames[i];
-    if (name && name !== '' && !name.startsWith('__') && !name.endsWith('__')) {
-      let creative = name;
-      creative = creative.substring(0, 30);
-      creative = creative.replace(/[^a-zA-Z0-9_\-]/g, '_');
-      console.log('🎯 Criativo detectado:', creative);
-      return creative;
+  // PRIORIDADE 2: CreativeID
+  let creativeId = urlParams.get('CreativeID');
+  if (creativeId && creativeId !== '' && !creativeId.startsWith('__')) {
+    let cleaned = creativeId.substring(0, 40).replace(/[^a-zA-Z0-9_\-]/g, '_');
+    console.log('✅ Criativo via CreativeID:', cleaned);
+    return cleaned;
+  }
+  
+  // PRIORIDADE 3: click_id
+  let clickId = urlParams.get('click_id');
+  if (clickId && clickId !== '' && !clickId.startsWith('__')) {
+    let cleaned = clickId.substring(0, 40).replace(/[^a-zA-Z0-9_\-]/g, '_');
+    console.log('✅ Criativo via click_id:', cleaned);
+    return cleaned;
+  }
+  
+  // PRIORIDADE 4: utm_content
+  let utmContent = urlParams.get('utm_content');
+  if (utmContent && utmContent !== '') {
+    let cleaned = utmContent.substring(0, 40).replace(/[^a-zA-Z0-9_\-]/g, '_');
+    console.log('✅ Criativo via utm_content:', cleaned);
+    return cleaned;
+  }
+  
+  // FALLBACK: usar o final do sck (se existir)
+  let sck = urlParams.get('sck');
+  if (sck && sck !== '') {
+    let partes = sck.split('-');
+    let ultimaParte = partes[partes.length - 1];
+    if (ultimaParte && ultimaParte.length > 5) {
+      let cleaned = ultimaParte.substring(0, 30).replace(/[^a-zA-Z0-9_\-]/g, '_');
+      console.log('⚠️ Criativo fallback (via sck):', cleaned);
+      return cleaned;
     }
   }
   
-  // Se não encontrou nenhum criativo, gera um baseado no horário
+  // Último fallback: usar horário
   const now = new Date();
-  const timestamp = `${now.getHours()}h${now.getMinutes()}m`;
-  const fallback = `criativo_${timestamp}`;
-  console.log('🎯 Criativo fallback (gerado):', fallback);
-  return fallback;
+  const timestamp = `${now.getHours()}h${now.getMinutes()}m${now.getSeconds()}s`;
+  console.log('⚠️ Criativo fallback (timestamp):', timestamp);
+  return timestamp;
 }
 
-// ==========================================
-// CONSTRÓI A URL FINAL (envia campanha E criativo)
-// ==========================================
-function buildDestinationUrl() {
-  const campaignName = getCampaignName();
+function buildTelegramUrl() {
   const creativeName = getCreativeName();
   
-  const baseUrl = "https://eufacodineirocomhot.com/l/d0089464";
+  const baseUrl = "https://t.me/DaarkVazados1_bot";
   const url = new URL(baseUrl);
   
-  // Parâmetro fixo
-  url.searchParams.set('shk', 'n455du82');
-  
-  // ==========================================
-  // ENVIA A CAMPANHA (vários formatos)
-  // ==========================================
-  url.searchParams.set('cname', campaignName);
-  url.searchParams.set('CampaignID', campaignName);
-  url.searchParams.set('campaign', campaignName);
-  url.searchParams.set('utm_campaign', campaignName);
-  url.searchParams.set('source', campaignName);
-  url.searchParams.set('codigo', campaignName);
-  
-  // ==========================================
-  // ENVIA O CRIATIVO (vários formatos)
-  // ==========================================
-  url.searchParams.set('adname', creativeName);
-  url.searchParams.set('creative', creativeName);
-  url.searchParams.set('utm_content', creativeName);
-  url.searchParams.set('start', creativeName);  // <-- Código de Vendas no bot
-  
-  // Captura TODOS os parâmetros da URL atual
-  const urlParams = new URLSearchParams(window.location.search);
-  
-  const paramsToKeep = [
-    'CampaignID', 'CreativeID', 'kwai_click_id', 'cname', 'setname', 'adname',
-    'siteid', 'lg', 'sys', 'idfa', 'os_name', 'gps_adid', 'ip_address', 
-    'user_agent', 'device_name', 'xgo',
-    'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'utm_id',
-    'source', 'medium', 'campaign', 'term', 'content',
-    'fbclid', 'ttclid', 'gclid', 'msclkid'
-  ];
-  
-  paramsToKeep.forEach(param => {
-    const value = urlParams.get(param);
-    if (value && value !== '' && !value.startsWith('__') && !value.endsWith('__')) {
-      if (!['cname', 'CampaignID', 'campaign', 'utm_campaign', 'source', 'codigo', 'adname', 'creative', 'utm_content', 'start'].includes(param)) {
-        url.searchParams.set(param, value);
-      }
-    }
-  });
+  // start = criativo (Código de Vendas)
+  url.searchParams.set('start', creativeName);
   
   console.log('🔗 URL FINAL:', url.toString());
-  console.log('📌 Campanha enviada:', campaignName);
-  console.log('📌 Criativo enviado (Código de Vendas):', creativeName);
+  console.log('📌 CÓDIGO DE VENDAS (start):', creativeName);
   
   return url.toString();
 }
@@ -172,8 +87,7 @@ function buildDestinationUrl() {
 function updateButtonLink() {
   const button = document.querySelector('.button');
   if (button) {
-    button.href = buildDestinationUrl();
-    console.log('✅ Botão atualizado!');
+    button.href = buildTelegramUrl();
   }
 }
 
@@ -183,23 +97,21 @@ document.addEventListener('DOMContentLoaded', function() {
   const button = document.querySelector('.button');
   if (button) {
     button.addEventListener('click', function(e) {
-      this.href = buildDestinationUrl();
-      console.log('🖱️ Clique - Campanha:', getCampaignName(), '| Criativo:', getCreativeName());
+      this.href = buildTelegramUrl();
     });
   }
 });
 
-console.log('🚀 Página carregada - URL:', window.location.href);
-console.log('📊 Parâmetros:', getAllParams());
+console.log('🚀 Página carregada');
+console.log('📋 URL:', window.location.href);
+console.log('📊 PARÂMETROS NA URL:');
+new URLSearchParams(window.location.search).forEach((value, key) => {
+  console.log(`   ${key} = ${value}`);
+});
 </script>
 
 <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
         background: radial-gradient(circle at center top, rgb(26, 26, 26), rgb(13, 13, 13) 70%);
         font-family: Arial, Helvetica, sans-serif;
@@ -209,7 +121,6 @@ console.log('📊 Parâmetros:', getAllParams());
         align-items: center;
         min-height: 100vh;
     }
-
     .wrapper {
         max-width: 480px;
         width: 100%;
@@ -219,36 +130,11 @@ console.log('📊 Parâmetros:', getAllParams());
         border-radius: 16px;
         box-shadow: rgba(0, 136, 204, 0.3) 0px 0px 40px;
     }
-
-    .telegram-logo {
-        width: 70px;
-        margin-bottom: 20px;
-    }
-
-    h1 {
-        font-size: 26px;
-        margin-bottom: 15px;
-        color: rgb(0, 136, 204);
-    }
-
-    .sub {
-        font-size: 15px;
-        color: rgb(204, 204, 204);
-        margin-bottom: 25px;
-        line-height: 1.6;
-    }
-
-    .features {
-        text-align: left;
-        margin-bottom: 25px;
-    }
-
-    .features p {
-        margin-bottom: 8px;
-        font-size: 14px;
-        color: rgb(221, 221, 221);
-    }
-
+    .telegram-logo { width: 70px; margin-bottom: 20px; }
+    h1 { font-size: 26px; margin-bottom: 15px; color: rgb(0, 136, 204); }
+    .sub { font-size: 15px; color: rgb(204, 204, 204); margin-bottom: 25px; line-height: 1.6; }
+    .features { text-align: left; margin-bottom: 25px; }
+    .features p { margin-bottom: 8px; font-size: 14px; color: rgb(221, 221, 221); }
     .button {
         display: block;
         width: 100%;
@@ -259,50 +145,26 @@ console.log('📊 Parâmetros:', getAllParams());
         color: rgb(255, 255, 255);
         font-weight: bold;
         font-size: 17px;
-        transition: 0.3s;
         text-align: center;
         cursor: pointer;
     }
-
-    .button:hover {
-        transform: scale(1.03);
-        box-shadow: rgba(0, 136, 204, 0.6) 0px 0px 20px;
-    }
-
-    .footer {
-        font-size: 12px;
-        color: rgb(102, 102, 102);
-        margin-top: 20px;
-    }
+    .button:hover { transform: scale(1.03); box-shadow: rgba(0, 136, 204, 0.6) 0px 0px 20px; }
+    .footer { font-size: 12px; color: rgb(102, 102, 102); margin-top: 20px; }
 </style>
-
 </head>
 <body>
-
 <div class="wrapper">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" class="telegram-logo" alt="Telegram Logo" width="70" height="70">
-
+    <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" class="telegram-logo" alt="Telegram Logo">
     <h1>Acesso Direto 🔒</h1>
-
-    <p class="sub">
-        Clique no botão abaixo para acessar o conteúdo exclusivo.
-    </p>
-
+    <p class="sub">Clique no botão abaixo para acessar o conteúdo exclusivo.</p>
     <div class="features">
         <p>🔞 Conteúdos exclusivos</p>
         <p>💬 Acesso rápido e seguro</p>
         <p>🎥 Atualizações frequentes</p>
         <p>⚠️ Disponibilidade limitada</p>
     </div>
-
-    <a href="#" class="button">
-        ACESSAR CONTEÚDO AGORA
-    </a>
-
-    <div class="footer">
-        Você será redirecionado para a página de acesso.
-    </div>
+    <a href="#" class="button">ACESSAR CONTEÚDO AGORA</a>
+    <div class="footer">Você será redirecionado para o Telegram.</div>
 </div>
-
 </body>
 </html>
