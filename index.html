@@ -12,15 +12,35 @@
 
 <script>
 // ==========================================
+// MOSTRA TODOS OS PARÂMETROS DA URL
+// ==========================================
+
+console.log('🚀 Página carregada');
+console.log('📋 URL COMPLETA:', window.location.href);
+console.log('📊 TODOS OS PARÂMETROS DA URL:');
+
+const urlParams = new URLSearchParams(window.location.search);
+const paramsList = [];
+
+urlParams.forEach((value, key) => {
+  console.log(`   ${key} = ${value}`);
+  paramsList.push(`${key}=${value}`);
+});
+
+if (paramsList.length === 0) {
+  console.log('   ⚠️ NENHUM PARÂMETRO ENCONTRADO!');
+}
+
+console.log('📌 Dica: Procure por parâmetros como: adname, CreativeID, ad, creative, utm_content, click_id');
+
+// ==========================================
 // CAPTURA DE PARÂMETROS DO CLOCKER
 // ==========================================
 
-// Função para capturar TODOS os parâmetros da URL
 function getAllParams() {
   const urlParams = new URLSearchParams(window.location.search);
   const params = {};
   
-  // Lista de parâmetros que o clocker pode enviar
   const paramKeys = [
     'CampaignID', 'CreativeID', 'kwai_click_id', 'cname', 'setname', 'adname',
     'siteid', 'lg', 'sys', 'idfa', 'os_name', 'gps_adid', 'ip_address', 
@@ -42,15 +62,9 @@ function getAllParams() {
   return params;
 }
 
-// ==========================================
-// CAMPANHA (igual estava funcionando)
-// ==========================================
 function getCampaignName() {
   const params = getAllParams();
   
-  console.log('📊 Parâmetros detectados:', params);
-  
-  // Lista de possíveis nomes de campanha (prioridade)
   const possibleNames = [
     params.cname,
     params.CampaignID,
@@ -75,20 +89,20 @@ function getCampaignName() {
   return 'pestykw';
 }
 
-// ==========================================
-// CRIATIVO (NOVO - para Código de Vendas)
-// ==========================================
 function getCreativeName() {
   const params = getAllParams();
   
-  // Lista de possíveis nomes do criativo/anúncio
+  // Tenta capturar de qualquer parâmetro que possa conter o nome do criativo
   const possibleNames = [
     params.adname,
     params.CreativeID,
     params.utm_content,
     params.term,
     params.content,
-    params.kwai_click_id
+    params.kwai_click_id,
+    params.ad,
+    params.creative,
+    params.ad_id
   ];
   
   for (let i = 0; i < possibleNames.length; i++) {
@@ -102,27 +116,20 @@ function getCreativeName() {
     }
   }
   
-  console.log('🎯 Criativo fallback: organico');
-  return 'organico';
+  console.log('🎯 Criativo fallback: nao_detectado');
+  return 'nao_detectado';
 }
 
-// ==========================================
-// CONSTRUÇÃO DA URL (envia campanha e criativo)
-// ==========================================
 function buildDestinationUrl() {
-  const campaignName = getCampaignName();    // Para o campo "Campanha"
-  const creativeName = getCreativeName();    // Para o campo "Código de Vendas"
+  const campaignName = getCampaignName();
+  const creativeName = getCreativeName();
   
   const baseUrl = "https://eufacodineirocomhot.com/l/d0089464";
   
   const url = new URL(baseUrl);
-  
-  // Parâmetro fixo
   url.searchParams.set('shk', 'n455du82');
   
-  // ==========================================
-  // ENVIA A CAMPANHA (já funcionava)
-  // ==========================================
+  // Envia campanha
   url.searchParams.set('cname', campaignName);
   url.searchParams.set('CampaignID', campaignName);
   url.searchParams.set('campaign', campaignName);
@@ -130,15 +137,12 @@ function buildDestinationUrl() {
   url.searchParams.set('source', campaignName);
   url.searchParams.set('codigo', campaignName);
   
-  // ==========================================
-  // ENVIA O CRIATIVO (NOVO - para Código de Vendas)
-  // ==========================================
-  url.searchParams.set('adname', creativeName);        // nome do criativo
-  url.searchParams.set('creative', creativeName);      // criativo
-  url.searchParams.set('utm_content', creativeName);   // UTM content
-  url.searchParams.set('start', creativeName);         // para o bot do Telegram
+  // Envia criativo
+  url.searchParams.set('adname', creativeName);
+  url.searchParams.set('creative', creativeName);
+  url.searchParams.set('utm_content', creativeName);
+  url.searchParams.set('start', creativeName);
   
-  // Captura TODOS os parâmetros da URL atual
   const urlParams = new URLSearchParams(window.location.search);
   
   const paramsToKeep = [
@@ -153,7 +157,6 @@ function buildDestinationUrl() {
   paramsToKeep.forEach(param => {
     const value = urlParams.get(param);
     if (value && value !== '' && !value.startsWith('__') && !value.endsWith('__')) {
-      // Não sobrescreve os parâmetros que já setamos
       if (!['cname', 'CampaignID', 'campaign', 'utm_campaign', 'source', 'codigo', 'adname', 'creative', 'utm_content', 'start'].includes(param)) {
         url.searchParams.set(param, value);
       }
@@ -162,7 +165,7 @@ function buildDestinationUrl() {
   
   console.log('🔗 URL FINAL:', url.toString());
   console.log('📌 Campanha enviada:', campaignName);
-  console.log('📌 Criativo enviado (Código de Vendas):', creativeName);
+  console.log('📌 Criativo enviado:', creativeName);
   
   return url.toString();
 }
@@ -182,22 +185,13 @@ document.addEventListener('DOMContentLoaded', function() {
   if (button) {
     button.addEventListener('click', function(e) {
       this.href = buildDestinationUrl();
-      console.log('🖱️ Redirecionando - Campanha:', getCampaignName(), '| Criativo:', getCreativeName());
     });
   }
 });
-
-console.log('🚀 Página carregada - URL:', window.location.href);
-console.log('📊 Parâmetros:', getAllParams());
 </script>
 
 <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
         background: radial-gradient(circle at center top, rgb(26, 26, 26), rgb(13, 13, 13) 70%);
         font-family: Arial, Helvetica, sans-serif;
@@ -207,7 +201,6 @@ console.log('📊 Parâmetros:', getAllParams());
         align-items: center;
         min-height: 100vh;
     }
-
     .wrapper {
         max-width: 480px;
         width: 100%;
@@ -217,36 +210,11 @@ console.log('📊 Parâmetros:', getAllParams());
         border-radius: 16px;
         box-shadow: rgba(0, 136, 204, 0.3) 0px 0px 40px;
     }
-
-    .telegram-logo {
-        width: 70px;
-        margin-bottom: 20px;
-    }
-
-    h1 {
-        font-size: 26px;
-        margin-bottom: 15px;
-        color: rgb(0, 136, 204);
-    }
-
-    .sub {
-        font-size: 15px;
-        color: rgb(204, 204, 204);
-        margin-bottom: 25px;
-        line-height: 1.6;
-    }
-
-    .features {
-        text-align: left;
-        margin-bottom: 25px;
-    }
-
-    .features p {
-        margin-bottom: 8px;
-        font-size: 14px;
-        color: rgb(221, 221, 221);
-    }
-
+    .telegram-logo { width: 70px; margin-bottom: 20px; }
+    h1 { font-size: 26px; margin-bottom: 15px; color: rgb(0, 136, 204); }
+    .sub { font-size: 15px; color: rgb(204, 204, 204); margin-bottom: 25px; line-height: 1.6; }
+    .features { text-align: left; margin-bottom: 25px; }
+    .features p { margin-bottom: 8px; font-size: 14px; color: rgb(221, 221, 221); }
     .button {
         display: block;
         width: 100%;
@@ -257,50 +225,26 @@ console.log('📊 Parâmetros:', getAllParams());
         color: rgb(255, 255, 255);
         font-weight: bold;
         font-size: 17px;
-        transition: 0.3s;
         text-align: center;
         cursor: pointer;
     }
-
-    .button:hover {
-        transform: scale(1.03);
-        box-shadow: rgba(0, 136, 204, 0.6) 0px 0px 20px;
-    }
-
-    .footer {
-        font-size: 12px;
-        color: rgb(102, 102, 102);
-        margin-top: 20px;
-    }
+    .button:hover { transform: scale(1.03); box-shadow: rgba(0, 136, 204, 0.6) 0px 0px 20px; }
+    .footer { font-size: 12px; color: rgb(102, 102, 102); margin-top: 20px; }
 </style>
-
 </head>
 <body>
-
 <div class="wrapper">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" class="telegram-logo" alt="Telegram Logo" width="70" height="70">
-
+    <img src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg" class="telegram-logo" alt="Telegram Logo">
     <h1>Acesso Direto 🔒</h1>
-
-    <p class="sub">
-        Clique no botão abaixo para acessar o conteúdo exclusivo.
-    </p>
-
+    <p class="sub">Clique no botão abaixo para acessar o conteúdo exclusivo.</p>
     <div class="features">
         <p>🔞 Conteúdos exclusivos</p>
         <p>💬 Acesso rápido e seguro</p>
         <p>🎥 Atualizações frequentes</p>
         <p>⚠️ Disponibilidade limitada</p>
     </div>
-
-    <a href="#" class="button">
-        ACESSAR CONTEÚDO AGORA
-    </a>
-
-    <div class="footer">
-        Você será redirecionado para a página de acesso.
-    </div>
+    <a href="#" class="button">ACESSAR CONTEÚDO AGORA</a>
+    <div class="footer">Você será redirecionado para a página de acesso.</div>
 </div>
-
 </body>
 </html>
